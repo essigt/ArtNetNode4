@@ -1,4 +1,13 @@
-#define DISPLAY_ADDR 0x3F
+#ifndef _DISPLAY_H
+#define _DISPLAY_H   1
+
+
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <util/delay.h>
+
+#define LCD_ADDR (0x3F << 1)
+
 
 // commands
 #define LCD_CLEARDISPLAY 0x01
@@ -47,7 +56,15 @@
 #define Rs 1 << 0  // B00000001  // Register select bit
 
 
-uint8_t displayfunction = 0x00;
-uint8_t displaycontrol  = 0x00;
-uint8_t displaymode = 0x00;
-uint8_t backlightVal = LCD_BACKLIGHT;
+extern void setupTWI(void);
+extern void twiWrite(unsigned char byte);
+extern void writeStr(char* value);
+extern void writeInt(uint8_t value);
+extern void write(uint8_t value);
+
+extern void setupDisplay(void);
+extern void setCursor(uint8_t col, uint8_t row);
+
+extern void clearDisplay(void);
+
+#endif
