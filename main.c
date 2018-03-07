@@ -3,15 +3,20 @@
 #include <util/delay.h>
 
 #include "system.h"
+#include "timer.c"
 #include "display.h"
 #include "enc28j60.h"
 #include "dmx.h"
+#include "udp.h"
 
 
+uint8_t inv = 0;
 
 int main (void) {
 	cli();/* disable interrupts */ 
 	setUp32MhzInternalOsc();
+
+	setupTimer0();
 
 	//Setup debug leds
 	PORTA.DIR = 0x03;
@@ -30,33 +35,50 @@ int main (void) {
 	writeStr("Setup DMX");
 	setupDMX();
 
-	dmxBuffer[0][0] = 128;
-	dmxBuffer[0][1] = 0xFF;
-	dmxBuffer[0][2] = 0x0F;
-
-	uint8_t counter = 0;
+	uint16_t counter = 0;
 
 	PMIC.CTRL |= PMIC_LOLVLEN_bm | PMIC_MEDLVLEN_bm | PMIC_HILVLEN_bm;	
 
 	sei();
 
+	setCursor(0,0);
+	writeStr("DMX  1  2  3  4");
+
 	while(1) {
 		uint16_t len = packetReceive();
 		packageLoop(len);
 
-		startDMX_TX(); //Reicht? TODO: Timer, 44mal/sec
-
+		
+		/*if(counter == 0) {
+			setCursor(0,1);
+			if(inv == 0) {
+				write('|');
+				inv = 1;
+			} else if(inv == 1){
+				write('\\');
+				inv = 2;
+			} else if(inv == 2){
+				write('-');
+				inv = 3;
+			} else {
+				write('/');
+				inv = 0;
+			}
+		}*/
 
 		if(counter == 0) {
-			counter = 2000;
-			setCursor(0,0);
-			writeStr("Ch1:");
-			writeInt(dmxBuffer[0][0]);
-			writeStr(" Ch2:");
-			writeInt(dmxBuffer[0][1]);
-			writeStr("     ");
+			counter = 12000;
 
+			setCursor(0,1);
+			writeStr("FPS ");
+			writeIntWidth( getUniverseFPS(0), 2);
 			
+			writeStr(" ");
+			writeIntWidth( getUniverseFPS(1), 2);
+			writeStr(" ");
+			writeIntWidth( getUniverseFPS(2), 2);
+			writeStr(" ");
+			writeIntWidth( getUniverseFPS(3), 2);
 		}
 		
 		counter--;

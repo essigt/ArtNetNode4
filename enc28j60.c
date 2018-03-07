@@ -1,5 +1,4 @@
 #include "enc28j60.h"
-#include "enc28j60_defs.h"
 
 //#include "system.h"
 
@@ -172,10 +171,6 @@ uint8_t setupEthernet(void) {
     //////////////////////
     //2. Setup SPI on   //
     //////////////////////
-
-
-    //SPI_CLK2X_bm => Double Spedd when in master mode?(P.228)
-
     SPID.CTRL = (SPID.CTRL & ~SPI_MODE_gm) |
 			((SPI_MODE0_bm) & SPI_MODE_gm);
 
@@ -185,15 +180,9 @@ uint8_t setupEthernet(void) {
 
     SPID.CTRL |= SPI_ENABLE_bm;
 
-    //PORTD.DIRSET =  SPI_MOSI_bm | SPI_SCK_bm;
-
     PORTD.DIRSET = SSPIN;	 //D4 = CS
 	PORTD.OUTSET = SSPIN;
 
-
-    writeOp(0x01, 0x00, 0x02);
-
-    //return;
 
     //////////////////////
     //3. Setup ENC28J60 //
@@ -204,8 +193,7 @@ uint8_t setupEthernet(void) {
 
     writeOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
     
-    //delay(2); // errata B7/2
-    _delay_ms(2);
+    _delay_ms(2); // errata B7/2
     while (! (readOp(ENC28J60_READ_CTRL_REG, ESTAT) & ESTAT_CLKRDY));
 
 
@@ -243,18 +231,13 @@ uint8_t setupEthernet(void) {
     writeOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_INTIE|EIE_PKTIE); // Set Receive Interrutp Enabled
     writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN); //Enable Reception
 
-
-    PORTA.OUTSET = 0x02;
-
     uint8_t rev = readRegByte(EREVID);
-
-    PORTA.OUTCLR = 0x02;
     return rev;
 }
 
 
 
-uint8_t buffer[MAX_FRAMELEN];
+
 
 uint16_t packetReceive(void) {
     static uint16_t gNextPacketPtr = RXSTART_INIT;
@@ -300,99 +283,3 @@ uint16_t packetReceive(void) {
 
 
 
-void packageLoop(uint16_t len) {
-  struct {
-            uint8_t destAddr[6];
-            uint8_t srcAddr[6];
-            uint16_t length;
-            
-            uint8_t* data;
-  } macPackage;
-  
-  memcpy(&macPackage, buffer, sizeof(macPackage));
-  macPackage.data = ((uint8_t*)buffer) + 14; //Offset of data[]
-
-  struct {
-      uint8_t stuff;
-      uint8_t typeOfService;
-      uint8_t lengthH;
-      uint8_t lengthL;
-      uint16_t identfication;
-      uint16_t flagAndFragmentOffset;
-      uint8_t TTL;
-      uint8_t Protocoll;
-      uint16_t headerChecksum;
-      uint8_t srcIP[4];
-      uint8_t destIP[4];
-      uint8_t* data;
-  } ethPackage;
-
-
-  memcpy(&ethPackage, macPackage.data, sizeof(ethPackage));
-  ethPackage.data = macPackage.data + 20; //Offset of data[]
-
-  //Serial.println("Eth Header:");
-  //Serial.print("Length: " ); Serial.println(ethPackage.lengthH << 8 | ethPackage.lengthL, DEC);
-  //Serial.print("Protocoll: 0x" ); Serial.println(ethPackage.Protocoll, HEX);
-
-  //Serial.print("SrcIP: " ); Serial.print(ethPackage.srcIP[0], HEX); Serial.print(ethPackage.srcIP[1], HEX);Serial.print(ethPackage.srcIP[2], HEX); Serial.println(ethPackage.srcIP[3], HEX);
-
-
-  if(ethPackage.Protocoll == 17) { // 17 == UDP
-    struct {
-      uint8_t srcPortH;
-      uint8_t srcPortL;
-      uint8_t destPortH;
-      uint8_t destPortL;
-      uint8_t lengthH;
-      uint8_t lengthL;
-      uint16_t checksum;
-      uint8_t* data;
-    } udpPackage;
-    
-    memcpy(&udpPackage, ethPackage.data, sizeof(udpPackage));
-    udpPackage.data = ethPackage.data + 8; //Offset of *data
-
-    //Serial.println(" Package is UDP");
-    //Serial.print("   src Port: "); Serial.println(udpPackage.srcPortH << 8 | udpPackage.srcPortL);
-    //Serial.print("   destPort: "); Serial.println(udpPackage.destPortH << 8 | udpPackage.destPortL);
-    //Serial.print("   length: "); Serial.println(udpPackage.lengthH << 8 | udpPackage.lengthL);
-
-    
-  
-
-      if(memcmp("Art-Net", udpPackage.data, 7) == 0) { //TODO: Check last 0x00
-        //Serial.println("Starts with Art-Net");
-        uint16_t opCode = udpPackage.data[8] | udpPackage.data[9] << 8;
-
-        if(opCode = 0x5000) { //ART_DMX
-          uint8_t sequence = udpPackage.data[12];
-          uint16_t universe = udpPackage.data[14] | udpPackage.data[15] << 8;
-          uint16_t dmxDataLength = udpPackage.data[17] | udpPackage.data[16] << 8; //TODO: Check endian
-
-          if(dmxDataLength > 512) {
-              //TODO: Log error
-              dmxDataLength = 512;
-          }
-
-          //Serial.print("Seq: ");  Serial.println(sequence); 
-          //Serial.print("Universe: ");  Serial.println(universe); 
-          //Serial.print("Data Length: ");  Serial.println(dmxDataLength); 
-
-          /*Serial.print("Ch 1: ");  Serial.println(udpPackage.data[18]); 
-          Serial.print("Ch 2: ");  Serial.println(udpPackage.data[19]); 
-          Serial.print("Ch 3: ");  Serial.println(udpPackage.data[20]); 
-          Serial.print("Ch 4: ");  Serial.println(udpPackage.data[21]); */
-
-            
-
-            //Copy data to DMX Buffer
-          memcpy(dmxBuffer[0] , udpPackage.data + 18, dmxDataLength);
-          
-        }
-        
-      }
-
-  }
-
-}

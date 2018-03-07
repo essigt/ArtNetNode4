@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "io.h": "c",
+        "delay.h": "c",
+        "*.ipp": "cpp",
+        "enc28j60.h": "c",
+        "array": "c",
+        "functional": "c",
+        "dmx.h": "c",
+        "enc28j60_defs.h": "c"
+    }
+}

@@ -14,6 +14,7 @@ uint8_t* getUniverseBuffer(uint8_t universe) {
 }
 
 
+
 enum DMX_STATE {
     DMX_IDLE,
     DMX_BREAK,
@@ -45,13 +46,21 @@ void setupDMXPort(USART_t* uart) {
     uart->CTRLA = USART_TXCINTLVL_gm; // TX Highest INT Level    
     uart->CTRLC = USART_SBMODE_bm | USART_CHSIZE_8BIT_gc; //2 StopBits, 8 DataBits
 
-
     uart->CTRLB = USART_TXEN_bm; //Enable TX
 }
 
 void setupDMX(void) {
+    //DMX 1
+    PORTC.DIRSET = PIN3_bm; // Pin 3 -> UART 0 TX
+    PORTC.PIN3CTRL = PORT_INVEN_bm;    
+    setupDMXPort(&USARTC0);
 
-    
+    //DMX 2
+    PORTC.DIRSET = PIN7_bm; // Pin 3 -> UART 0 TX
+    PORTC.PIN7CTRL = PORT_INVEN_bm;    
+    setupDMXPort(&USARTC1);
+
+
     //DMX 3
     PORTD.DIRSET = PIN3_bm; // Pin 3 -> UART 0 TX
     PORTD.PIN3CTRL = PORT_INVEN_bm;    
@@ -64,22 +73,17 @@ void setupDMX(void) {
 }
 
 
-void startDMX_TX(void) {
-    
+void startDMX_TX(void) {    
     if(dmx0state == DMX_IDLE) {
-        PORTA.OUTSET = 0x01;
-
         //Set Baud
         UART0.BAUDCTRLA = DMX_BAUD_RESET_BSEL;
         UART0.BAUDCTRLB = DMX_BAUD_BSCALE << 4;
 
         //Send Break Byte
-        while (!( UART0.STATUS & USART_DREIF_bm));
         UART0.DATA = 0x00;
 
         dmx0state = DMX_START;
     }
-
 }
 
 ISR(USARTD0_TXC_vect) //Transimission complete
@@ -100,14 +104,10 @@ ISR(USARTD0_TXC_vect) //Transimission complete
 
         break;
         case DMX_RUN:
-            PORTA.OUTSET = 0x02;
-
             UART0.DATA = dmxBuffer[0][dmx0ch++];            
             
             if(dmx0ch >= 512) {
                 dmx0state = DMX_IDLE;
-                PORTA.OUTCLR = 0x03;
-                //_delay_ms(500);
             }
         break;
 

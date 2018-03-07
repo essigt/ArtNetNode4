@@ -46,6 +46,22 @@ void writeInt(uint8_t value) {
     writeStr(str);
 }
 
+void writeIntWidth(uint8_t value, uint8_t width) {
+	char str[4];
+
+	itoa(value, str, 10);
+	
+	if(width >= 3 && value < 100) {
+		write(' ');
+	}
+
+	if(width >= 2 && value < 10) {
+		write(' ');
+	}
+
+    writeStr(str);
+}
+
 
 void write(uint8_t value) {
   send(value, Rs);

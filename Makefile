@@ -78,7 +78,7 @@ OBJDIR = obj
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c
+SRC = $(TARGET).c display.c enc28j60.c dmx.c artnet.c udp.c
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
