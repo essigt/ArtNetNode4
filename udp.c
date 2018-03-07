@@ -9,11 +9,11 @@
 #define ART_DMX             0x5000
 
 
-static uint8_t eth_type_is_arp_and_my_ip(uint16_t len) {
+/*static uint8_t eth_type_is_arp_and_my_ip(uint16_t len) {
     return len >= 41 && gPB[ETH_TYPE_H_P] == ETHTYPE_ARP_H_V &&
            gPB[ETH_TYPE_L_P] == ETHTYPE_ARP_L_V &&
            memcmp(gPB + ETH_ARP_DST_IP_P, EtherCard::myip, IP_LEN) == 0;
-}
+}*/
 
 void packageLoop(uint16_t len) {
     if (len == 0)

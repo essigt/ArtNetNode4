@@ -20,8 +20,6 @@ void universeReceivedTMP(uint8_t universe) {
 }
 
 void doTimerStuff1Hz(void) {
-    PORTA.DIRTGL = 0x03;
-
     for(uint8_t i=0; i < 4; i++) {
         universeFPS[i] = universeFPSCounter[i];
         universeFPSCounter[i] = 0;
