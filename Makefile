@@ -78,11 +78,12 @@ OBJDIR = obj
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c display.c enc28j60.c dmx.c artnet.c udp.c
+SRC =  
 
 
-# List C++ source files here. (C dependencies are automatically generated.)
-CPPSRC = 
+# List C++ source files here. (C madependencies are automatically generated.)
+CPPSRC = $(TARGET).cpp display.cpp dmx.cpp timer.cpp artnet.cpp EtherCard.cpp enc28j60.cpp tcpip.cpp dhcp.cpp dns.cpp udpserver.cpp webutil.cpp
+
 
 
 # List Assembler source files here.

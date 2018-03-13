@@ -1,8 +1,17 @@
-#include "artnet.h"
 #include "timer.h"
+
+#include "artnet.h"
+#include "dmx.h"
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+
+
+//Different counters
+volatile uint16_t timer01hzCounter = 0;
+volatile uint8_t timer022HZCounter = 0;
+
+volatile uint32_t millisCounter = 0;
 
 
 void setupTimer0(void) {
@@ -15,12 +24,15 @@ void setupTimer0(void) {
     TCC0.INTCTRLA = 0b00000011; // Interrupt Highlevel
 }
 
-uint16_t timer01hzCounter = 0;
-uint8_t timer022HZCounter = 0;
+
+uint32_t millis(void) {
+    return millisCounter;
+}
 
 ISR(TCC0_OVF_vect) 
 {
     timer01hzCounter++; 
+    millisCounter++;
 
     if(timer01hzCounter >= 1000) {
         timer01hzCounter = 0;

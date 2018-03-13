@@ -6,6 +6,9 @@
 #define DMX_NUM_UNIVERSES    4
 #define DMX_UNIVERSE_SIZE  512
 
+extern uint8_t my_mac[6];
+extern uint8_t my_ip[4];
+
 extern uint8_t dmxBuffer[DMX_NUM_UNIVERSES][DMX_UNIVERSE_SIZE];
 
 

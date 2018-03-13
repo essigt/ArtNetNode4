@@ -32,7 +32,7 @@ typedef struct DMX_PORT {
 } DMX_t;
 
 
-volatile DMX_t dmxPorts[DMX_NUM_UNIVERSES];
+DMX_t dmxPorts[DMX_NUM_UNIVERSES];
 
 
 #define DMX_BAUD_BSCALE          0   // vorher 0b1001 -> -1

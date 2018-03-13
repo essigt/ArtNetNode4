@@ -4,6 +4,8 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
+#include <stdlib.h>
+
 #define Takt_TWI 400000
 #define TWI_BAUD(F_SYS, F_TWI) ((F_SYS / (2 * F_TWI)) - 5)
 #define TWI_BAUDRATE TWI_BAUD(F_CPU, Takt_TWI)
@@ -33,6 +35,42 @@ void twiWrite(unsigned char byte) {
 }
 
 
+
+void send(uint8_t value, uint8_t mode);
+
+void write(uint8_t value) {
+  send(value, Rs);
+}
+
+void writeDirect(uint8_t b) {
+  twiWrite(b | backlightVal);
+}
+
+void pulseEnable(uint8_t _data){
+  writeDirect(_data | En);  // En high
+  _delay_ms(1);   // enable pulse must be >450ns
+  
+  writeDirect(_data & ~En); // En low
+  _delay_ms(1);    // commands need > 37us to settle
+} 
+
+void write4bits(uint8_t data) {
+  writeDirect(data);
+  pulseEnable(data);
+}
+
+
+void send(uint8_t value, uint8_t mode) {
+  uint8_t highnib=value&0xf0;
+  uint8_t lownib=(value<<4)&0xf0;
+  write4bits((highnib)|mode);
+  write4bits((lownib)|mode); 
+}
+
+void command(uint8_t value) {
+  send(value, 0);
+}
+
 void writeStr(char value[]) {
     while(*value != 0) {
         send(*value++, Rs);
@@ -61,41 +99,6 @@ void writeIntWidth(uint8_t value, uint8_t width) {
 
     writeStr(str);
 }
-
-
-void write(uint8_t value) {
-  send(value, Rs);
-}
-
-void writeDirect(uint8_t b) {
-  twiWrite(b | backlightVal);
-}
-
-void pulseEnable(uint8_t _data){
-  writeDirect(_data | En);  // En high
-  _delay_ms(1);   // enable pulse must be >450ns
-  
-  writeDirect(_data & ~En); // En low
-  _delay_ms(1);    // commands need > 37us to settle
-} 
-
-void write4bits(uint8_t data) {
-  writeDirect(data);
-  pulseEnable(data);
-}
-
-void send(uint8_t value, uint8_t mode) {
-  uint8_t highnib=value&0xf0;
-  uint8_t lownib=(value<<4)&0xf0;
-  write4bits((highnib)|mode);
-  write4bits((lownib)|mode); 
-}
-
-void command(uint8_t value) {
-  send(value, 0);
-}
-
-
 
 /**
  * Setup the Display
