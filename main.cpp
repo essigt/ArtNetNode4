@@ -1,6 +1,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
+#include <string.h> //memcpy
 
 #include "system.h"
 #include "timer.h"
@@ -26,6 +27,12 @@ void udpArtNet(uint16_t dest_port, uint8_t src_ip[IP_LEN], uint16_t src_port, co
 
 	if(opCode == 0x5000) { //ArtDMX
 		PORTA.OUTTGL = 0x03;
+
+		if (universe < 4)
+        {
+            memcpy(dmxBuffer[universe], data + 18, length);
+            universeReceivedTMP(universe);
+        }
 	}
 }
 
