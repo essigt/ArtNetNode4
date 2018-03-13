@@ -18,27 +18,34 @@ uint8_t Ethernet::buffer[1500];
 
 void udpArtNet(uint16_t dest_port, uint8_t src_ip[IP_LEN], uint16_t src_port, const char *data, uint16_t len) {
 
-	int result = strncmp(data, "Art-Net",7);
+
+	uint8_t result = strncmp(data, "Art-Net",7);
+
 	uint16_t opCode = (data[8] << 8) | data[9];
 	uint16_t protocolVersion = data[10] << 8 | data[11];
 
-	uint16_t universe = data[14] << 8 | data[15];
+	uint16_t universe = data[14] | data[15] << 8 ;
 	uint16_t length = data[16] << 8 | data[17];
 
-	if(opCode == 0x5000) { //ArtDMX
+	
+
+	if(opCode == 80) { //ArtDMX
 		PORTA.OUTTGL = 0x03;
 
 		if (universe < 4)
         {
             memcpy(dmxBuffer[universe], data + 18, length);
             universeReceivedTMP(universe);
+
+			/*setCursor(0,1);
+			writeStr("OpCode:");
+			writeInt(opCode);
+			writeStr("    ");*/
         }
 	}
 }
 
 int main (void) {
-
-	
 	cli();/* disable interrupts */ 
 	setUp32MhzInternalOsc();
 
@@ -46,7 +53,7 @@ int main (void) {
 
 	//Setup debug leds
 	PORTA.DIR = 0x03;
-	PORTA.OUTSET = 0x03;
+	PORTA.OUTCLR = 0x03;
 
 	setupTWI();
 	setupDisplay();
@@ -67,8 +74,10 @@ int main (void) {
 	writeStr(".");
 	writeInt(ipaddr[3]);
 
+	
 	ether.begin(sizeof Ethernet::buffer, macaddr);
 	ether.staticSetup(ipaddr); //TODO: GW IP?
+	ether.enableBroadcast();
 	ether.udpServerListenOnPort(&udpArtNet, UDP_PORT_ARTNET);
 
 	clearDisplay();
@@ -95,10 +104,10 @@ int main (void) {
 		if(counter == 0) {
 			counter = 12000;
 
+			
 			setCursor(0,1);
 			writeStr("FPS ");
 			writeIntWidth( getUniverseFPS(0), 2);
-			
 			writeStr(" ");
 			writeIntWidth( getUniverseFPS(1), 2);
 			writeStr(" ");

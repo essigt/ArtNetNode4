@@ -269,8 +269,8 @@ void ENC28J60::initSPI () {
 
     SPID.CTRL |= SPI_ENABLE_bm;
 
-    PORTD.DIRSET = SSPIN;	 //D4 = CS
-	PORTD.OUTSET = SSPIN;
+    PORTD.DIRSET = 1 << SSPIN;	 //D4 = CS
+	PORTD.OUTSET = 1 << SSPIN;
 
 
     //OLD
@@ -280,11 +280,11 @@ void ENC28J60::initSPI () {
 
 static void enableChip (void) {
     cli();
-    PORTD.OUTCLR = SSPIN; //TODO: Check
+    PORTD.OUTCLR = 1 << SSPIN; //TODO: Check
 }
 
 static void disableChip (void) {
-    PORTD.OUTSET = SSPIN;
+    PORTD.OUTSET = 1 << SSPIN;
     sei();
 }
 
@@ -395,16 +395,20 @@ static void writePhy (uint8_t address, uint16_t data) {
 
 uint8_t ENC28J60::initialize (uint16_t size, const uint8_t* macaddr) {
     bufferSize = size;
-    if ((SPID.CTRL | SPI_ENABLE_bm) == 0)
+    initSPI(); //TODO: Fix it
+    if ((SPID.CTRL | SPI_ENABLE_bm) == 0) {
         initSPI();
+    }
 
     //Setup Pin
     disableChip();
-
+    
     writeOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
     _delay_ms(2); // errata B7/2
-    while (!readOp(ENC28J60_READ_CTRL_REG, ESTAT) & ESTAT_CLKRDY)
-        ;
+    while (!readOp(ENC28J60_READ_CTRL_REG, ESTAT) & ESTAT_CLKRDY);
+    
+
+    
 
     writeReg(ERXST, RXSTART_INIT);
     writeReg(ERXRDPT, RXSTART_INIT);
