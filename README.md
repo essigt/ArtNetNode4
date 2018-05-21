@@ -8,6 +8,7 @@ Small Xmega32 and enc28j60 based DYI ArtNet Node with 4 DMX ports.
     - Testes framerate: 4x 52 FPS
     - Web Interface for configuration(WIP, see TODO)
     - industry standard 19" 1U housing
+    - Ported [EtherCard](https://github.com/jcw/ethercard) to XMega32
 
 
 ## TODO:
@@ -16,6 +17,7 @@ Small Xmega32 and enc28j60 based DYI ArtNet Node with 4 DMX ports.
  - [ ] Use DMX Ports as Input
  - [ ] Implement ArtPoolReplay
  - [ ] Implement other ArtNet functions(setName,...)
+ - [ ] Upload Eagle-File's
 
 
  ## Images
