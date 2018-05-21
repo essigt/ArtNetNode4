@@ -48,10 +48,10 @@ void writeDirect(uint8_t b) {
 
 void pulseEnable(uint8_t _data){
   writeDirect(_data | En);  // En high
-  _delay_ms(1);   // enable pulse must be >450ns
+  _delay_us(1);   // enable pulse must be >450ns
   
   writeDirect(_data & ~En); // En low
-  _delay_ms(1);    // commands need > 37us to settle
+  _delay_us(38);    // commands need > 37us to settle
 } 
 
 void write4bits(uint8_t data) {
@@ -71,7 +71,7 @@ void command(uint8_t value) {
   send(value, 0);
 }
 
-void writeStr(char value[]) {
+void writeStr(const char value[]) {
     while(*value != 0) {
         send(*value++, Rs);
     }

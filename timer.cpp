@@ -36,7 +36,7 @@ ISR(TCC0_OVF_vect)
 
     if(timer01hzCounter >= 1000) {
         timer01hzCounter = 0;
-        doTimerStuff1Hz(); //Art-Net
+        artnet.doTimerStuff1Hz(); //Art-Net
     }
 
     timer022HZCounter++;

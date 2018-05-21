@@ -58,7 +58,7 @@
 
 extern void setupTWI(void);
 extern void twiWrite(unsigned char byte);
-extern void writeStr(char* value);
+extern void writeStr(const  char* value);
 extern void writeInt(uint8_t value);
 extern void writeIntWidth(uint8_t value, uint8_t width);
 extern void write(uint8_t value);

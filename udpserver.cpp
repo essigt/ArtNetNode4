@@ -5,7 +5,7 @@
 // Copyright: GPL V2
 // See http://www.gnu.org/licenses/gpl.html
 
-#include "ethercard.h"
+#include "EtherCard.h"
 #include "net.h"
 
 #define gPB ether.buffer

@@ -6,3 +6,5 @@
 *.sym
 obj/**
 .dep/**
+
+.directory

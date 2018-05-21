@@ -16,7 +16,7 @@
 
 #include <avr/io.h>
 
-#include "ethercard.h"
+#include "EtherCard.h"
 #include "net.h"
 #include "timer.h"
 

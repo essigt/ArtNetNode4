@@ -4,7 +4,7 @@
 //
 // 2010-05-20 <jc@wippler.nl>
 
-#include "ethercard.h"
+#include "EtherCard.h"
 #include "net.h"
 
 #include "timer.h"

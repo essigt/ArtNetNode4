@@ -408,7 +408,7 @@ uint8_t ENC28J60::initialize (uint16_t size, const uint8_t* macaddr) {
     while (!readOp(ENC28J60_READ_CTRL_REG, ESTAT) & ESTAT_CLKRDY);
     
 
-    
+    //TODO: Check full/half duplex
 
     writeReg(ERXST, RXSTART_INIT);
     writeReg(ERXRDPT, RXSTART_INIT);
@@ -433,6 +433,7 @@ uint8_t ENC28J60::initialize (uint16_t size, const uint8_t* macaddr) {
     writeRegByte(MAADR1, macaddr[4]);
     writeRegByte(MAADR0, macaddr[5]);
     writePhy(PHCON2, PHCON2_HDLDIS);
+    writePhy(PHCON1, PHCON1_PDPXMD); //Full Duplex mode
     SetBank(ECON1);
     writeOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_INTIE|EIE_PKTIE);
     writeOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
@@ -448,6 +449,12 @@ uint8_t ENC28J60::initialize (uint16_t size, const uint8_t* macaddr) {
 
 bool ENC28J60::isLinkUp() {
     return (readPhyByte(PHSTAT2) >> 2) & 1;
+}
+
+bool ENC28J60::isReceiveError () {
+    bool result = readRegByte(EIR) & EIR_RXERIF;
+    writeOp(ENC28J60_BIT_FIELD_CLR, EIR, EIR_RXERIF); //Clear flag
+    return result;
 }
 
 /*

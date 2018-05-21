@@ -10,41 +10,33 @@
 #include "dmx.h"
 #include "artnet.h"
 
-#include "ethercard.h"
+#include "EtherCard.h"
 
-uint8_t Ethernet::buffer[1500];
-
-
-
-void udpArtNet(uint16_t dest_port, uint8_t src_ip[IP_LEN], uint16_t src_port, const char *data, uint16_t len) {
+uint8_t Ethernet::buffer[590];
 
 
-	uint8_t result = strncmp(data, "Art-Net",7);
+BufferFiller bfill;
 
-	uint16_t opCode = (data[8] << 8) | data[9];
-	uint16_t protocolVersion = data[10] << 8 | data[11];
+volatile uint8_t missedFrames = 0;
 
-	uint16_t universe = data[14] | data[15] << 8 ;
-	uint16_t length = data[16] << 8 | data[17];
+static uint16_t homePage() {
+	bfill = ether.tcpOffset();
 
-	
+    char* name = "ArtNetNode 1";
+	char* ip = "2.0.0.10";
+	uint8_t portA = 1;
+	uint8_t portB = 2;
+	uint8_t portC = 3;
+	uint8_t portD = 4;
 
-	if(opCode == 80) { //ArtDMX
-		PORTA.OUTTGL = 0x03;
-
-		if (universe < 4)
-        {
-            memcpy(dmxBuffer[universe], data + 18, length);
-            universeReceivedTMP(universe);
-
-			/*setCursor(0,1);
-			writeStr("OpCode:");
-			writeInt(opCode);
-			writeStr("    ");*/
-        }
-	}
+	bfill.emit_p(PSTR("<!DOCTYPE html><html lang=\"de\"><head><meta charset=\"utf-8\" /><title>ArtNet Node</title><style>html,body{margin:20px;font-family:Arial;background:#eff0f1;color:#fff}#main{width:400px;margin:auto;padding:10px;background:#505659;font-weight:bold;text-align:center;border-bottom-left-radius:4px;border-bottom-right-radius:4px;font-size:13px}#header{border-top-left-radius:4px;border-top-right-radius:4px;width:400px;margin:auto;padding:10px;background:#0e89f6}input{background:#3a3f41;border:none;border-radius:2px;padding:8px;color:#fff;text-align:center;width:90%}input[type=submit]{width:100%;background:#575d60;border:#62696c 1px solid }.num{width:40px}td{text-align:left}td.c{text-align:right}</style></head><body><div id=\"header\"> Settings</div><div id=\"main\"><form method=\"POST\"> <br><table width=\"400px\" ><tr><td >IP</td><td class=\"c\" width=\"80%\"><input type=\"text\" value=\"$S\" name=\"ip\"></td></tr><tr><td >Name</td><td class=\"c\" width=\"80%\"><input type=\"text\" value=\"$S\" name=\"name\"></td></tr><tr><td >Port A</td><td class=\"c\"><input type=\"text\" class=\"num\" value=\"$D\" name=\"a\"></td></tr><tr><td>Port B</td><td class=\"c\"><input type=\"text\" class=\"num\" value=\"$D\" name=\"b\"></td></tr><tr><td>Port C</td><td class=\"c\"><input type=\"text\" class=\"num\" value=\"$D\" name=\"c\"></td></tr></table> <br> <input type=\"submit\" value=\"Save\" /></form></div></body></html>")
+		,name, ip, portA, portB, portC, portD);	  
+	return bfill.position();
 }
 
+
+
+//TODO: Move WebPage Stuff into other module
 int main (void) {
 	cli();/* disable interrupts */ 
 	setUp32MhzInternalOsc();
@@ -62,11 +54,12 @@ int main (void) {
 	writeStr("Setup Eth0");
 
 	static uint8_t macaddr[] = { 0x70,0x69,0x69,0x2D,0x30,0x31 };
+	//TODO: Load from EEPROM
 	static uint8_t ipaddr[] = { 2,0,0,10 };
 
 	setCursor(0,0);
 	writeStr("IP:");
-	writeInt(ipaddr[0]);
+	writeInt(ipaddr[0]);	
 	writeStr(".");
 	writeInt(ipaddr[1]);
 	writeStr(".");
@@ -76,9 +69,9 @@ int main (void) {
 
 	
 	ether.begin(sizeof Ethernet::buffer, macaddr);
-	ether.staticSetup(ipaddr); //TODO: GW IP?
+	ether.staticSetup(ipaddr); 
 	ether.enableBroadcast();
-	ether.udpServerListenOnPort(&udpArtNet, UDP_PORT_ARTNET);
+	ether.udpServerListenOnPort(artnet.udpArtNet, UDP_PORT_ARTNET);
 
 	clearDisplay();
 
@@ -97,23 +90,62 @@ int main (void) {
 	setCursor(0,0);
 	writeStr("DMX  1  2  3  4");
 
+
+	uint8_t receivedPost = 0;
+
 	while(1) {
-		ether.packetLoop(ether.packetReceive());
+		uint16_t pos = ether.packetLoop(ether.packetReceive());
+
+		//Handle TCP packages
+		if(pos) {
+			char* data = (char *) Ethernet::buffer + pos;
+
+			if (strncmp("GET / ", data, 7) == 0) {
+    			ether.httpServerReply(homePage()); // send web page data
+			} else if (strncmp("POST / ", data, 7) == 0) {
+				receivedPost = 1;
+
+				char result[5]; result[0] = 0;
+				EtherCard::findKeyVal(data, result, 4, "a");
+				/* setCursor(0,0);		
+				writeStr(result);*/
+
+    			ether.httpServerReply(homePage()); // send web page data
+			}
+		}
+
+		if(ether.isReceiveError()) {
+			PORTA.OUTTGL = 0x02;
+			missedFrames++;
+		}
 
 
 		if(counter == 0) {
 			counter = 12000;
 
+			setCursor(15,0);
+			if(ether.isLinkUp()) {
+				writeStr("L");
+			} else {
+				writeStr(" ");
+			}
 			
+			setCursor(15,1);
+			if(receivedPost == 1) {
+				writeStr("P");
+			} else {
+				writeStr(" ");
+			}
+
 			setCursor(0,1);
 			writeStr("FPS ");
-			writeIntWidth( getUniverseFPS(0), 2);
+			writeIntWidth( artnet.getUniverseFPS(0), 2);
 			writeStr(" ");
-			writeIntWidth( getUniverseFPS(1), 2);
+			writeIntWidth( artnet.getUniverseFPS(1), 2);
 			writeStr(" ");
-			writeIntWidth( getUniverseFPS(2), 2);
+			writeIntWidth( artnet.getUniverseFPS(2), 2);
 			writeStr(" ");
-			writeIntWidth( getUniverseFPS(3), 2);
+			writeIntWidth( artnet.getUniverseFPS(3), 2);
 		}
 		
 		counter--;

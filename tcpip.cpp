@@ -12,7 +12,7 @@
 // 2010-05-20 <jc@wippler.nl>
 
 #include "net.h"
-#include "ethercard.h"
+#include "EtherCard.h"
 
 
 #include <string.h>
